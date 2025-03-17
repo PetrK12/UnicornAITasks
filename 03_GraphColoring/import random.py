@@ -18,27 +18,30 @@ def readdimacs(filename):
 
 G1 = readdimacs('dsjc125.9.col.txt')  
 
-def iscoloring(G, col):
-    """Ověří, zda je dané obarvení grafu validní."""
-    for u, v in G.edges():
-        if col[u] == col[v]:
-            return False
-    return True
-
 def color(G, k, steps):
     """Použije lokální prohledávání k nalezení obarvení grafu G pomocí k barev."""
     # Inicializace náhodného obarvení
     col = {node: random.randint(0, k-1) for node in G.nodes()}
     tabu_list = set()
+    stagnation_count = 0  # Počítadlo stagnace
+    max_stagnation = 500  # Po kolika krocích se resetuje tabu list
     
     for step in range(steps):
         conflicts = [(u, v) for u, v in G.edges() if col[u] == col[v]]
         if not conflicts:
             return col, True  # Našli jsme validní obarvení
         
+        # Pokud zbývá méně než 3 konfliktní hrany, ignorujeme tabu list
+        if len(conflicts) < 3:
+            tabu_list.clear()
+        
         # Vybereme náhodný konfliktní vrchol
         u, v = random.choice(conflicts)
         node = random.choice([u, v])
+        
+        # Pokud všechny konfliktní vrcholy jsou v tabu listu, resetujeme tabu list
+        if all(n in tabu_list for edge in conflicts for n in edge):
+            tabu_list.clear()
         
         # Pokud je uzel v tabu listu, vybereme jiný
         if node in tabu_list:
@@ -53,12 +56,25 @@ def color(G, k, steps):
         # Vybereme barvu s nejnižším konfliktem (s váženým výběrem)
         min_conflict = min(color_counts.values())
         best_colors = [c for c in color_counts if color_counts[c] == min_conflict]
-        col[node] = random.choice(best_colors)
+        new_color = random.choice(best_colors)
+        
+        # Pokud se barva nemění, zvyšujeme stagnaci
+        if col[node] == new_color:
+            stagnation_count += 1
+        else:
+            stagnation_count = 0  # Reset stagnace při změně
+        
+        col[node] = new_color
         
         # Přidáme vrchol do tabu listu, abychom zabránili cyklení
         tabu_list.add(node)
         if len(tabu_list) > 10:  # Omezíme velikost tabu listu
             tabu_list.pop()
+        
+        # Reset tabu listu při stagnaci
+        if stagnation_count >= max_stagnation:
+            tabu_list.clear()
+            stagnation_count = 0
         
         # Dynamická mutace (zvyšujeme šanci při stagnaci)
         mutation_rate = 0.1 if step < steps // 2 else 0.3
