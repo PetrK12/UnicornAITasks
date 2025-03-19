@@ -1,7 +1,7 @@
-import networkx as nx
+import networkx as nx # type: ignore
 import json
 import os
-import numpy as np
+import numpy as np # type: ignore
 
 class GraphIO:
     """Handles reading and writing graph-related data."""
@@ -24,7 +24,8 @@ class GraphIO:
             "Graph": graph_name,
             "Success": result[1],
             "Colors": result[0],
-            "Steps": result[2]
+            "Steps": result[2],
+            "NumberOfColors": len(set(result[0].values())) 
         }
 
         # Load existing data if the file exists
