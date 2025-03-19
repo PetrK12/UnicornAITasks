@@ -24,7 +24,6 @@ class GraphColoring:
         return [(u, v) for u, v in self.G.edges() if self.col[u] == self.col[v]]
 
     def resolve_conflicts(self, conflicts, step):
-        """Tries to resolve conflicts using local search."""
         u, v = random.choice(conflicts)
         node = random.choice([u, v])
 
